@@ -7,7 +7,7 @@ $global:CurrentFloor = 1
 $global:MonstersDefeated = 0
 $global:BossesDefeated = 0
 
-# Typewriter effect function
+# Typewriter effect function - Testing. 
 function Write-Typewriter {
     param(
         [string]$Text,
@@ -20,7 +20,7 @@ function Write-Typewriter {
         Write-Host $char -NoNewline -ForegroundColor $Color
         Start-Sleep -Milliseconds 0.1
     }
-    Write-Host ""  # New line after the text
+    Write-Host ""  # Page break, dont remove
 }
 
 # Quick text function for less important messages
@@ -105,7 +105,7 @@ $AscensionBonuses = @{
     Saint = @{ Health = 25; Mana = 18; Attack = 2; Defense = 7; Speed = 1 }
 }
 
-# Monster Definitions
+# Monster Definitions - TODO: Need more monster variant
 $MonsterTypes = @(
     @{ Name = "Goblin"; Health = 12; Attack = 4; Defense = 2; XP = 10; Gold = 5 },
     @{ Name = "Skeleton"; Health = 15; Attack = 5; Defense = 3; XP = 15; Gold = 8 },
@@ -121,7 +121,7 @@ $MonsterTypes = @(
     @{ Name = "Chaos Demon"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50 }
 )
 
-# Boss Definitions
+# Boss Definitions - Need more variant
 $BossTypes = @(
     @{ Name = "Ancient Dragon"; BaseHealth = 50; BaseAttack = 15; BaseDefense = 8; XP = 200; Gold = 100 },
     @{ Name = "Titan Lord"; BaseHealth = 60; BaseAttack = 12; BaseDefense = 12; XP = 180; Gold = 120 },
@@ -216,17 +216,16 @@ function Get-RandomMonster {
     if ($isBoss) {
         $boss = $BossTypes[(Get-Random -Maximum $BossTypes.Count)].Clone()
         
-        # Scale boss stats based on player level and stats
-       # Scale boss stats based on player level and stats
-	$scaleFactor = 1 + ($global:Player.Level * 0.3) + ($global:CurrentFloor * 0.15)
-	$boss.Health = [Math]::Round($boss.BaseHealth * $scaleFactor)
-	$boss.Attack = [Math]::Round($boss.BaseAttack * $scaleFactor)
-	$boss.Defense = [Math]::Round($boss.BaseDefense * $scaleFactor)
-	$boss.XP = [Math]::Round($boss.XP * $scaleFactor)
-	$boss.Gold = [Math]::Round($boss.Gold * $scaleFactor)
-	$boss.CriticalChance = 15  # Bosses have 15% critical chance
-	$boss.CriticalMultiplier = 2.0  # Bosses do 2x critical damage 
-        # Add special boss abilities
+        # Scale boss stats based on player level and stats - Need balancing?
+		$scaleFactor = 1 + ($global:Player.Level * 0.3) + ($global:CurrentFloor * 0.15)
+		$boss.Health = [Math]::Round($boss.BaseHealth * $scaleFactor)
+		$boss.Attack = [Math]::Round($boss.BaseAttack * $scaleFactor)
+		$boss.Defense = [Math]::Round($boss.BaseDefense * $scaleFactor)
+		$boss.XP = [Math]::Round($boss.XP * $scaleFactor)
+		$boss.Gold = [Math]::Round($boss.Gold * $scaleFactor)
+		$boss.CriticalChance = 15  # Bosses have 15% critical chance
+		$boss.CriticalMultiplier = 2.0  # Bosses do 2x critical damage 
+        # Add special boss abilities - TODO: Need more variant and random modifider.
         $boss.IsBoss = $true
         $boss.SpecialAbility = "Power Attack"  # Bosses hit harder
         
@@ -273,11 +272,11 @@ function Start-Combat {
 	    '1' {
 		$baseDamage = [Math]::Max(1, $global:Player.Attack - $monster.Defense + (Get-Random -Minimum -2 -Maximum 3))
 		
-		# Critical hit check
+		# Critical hit check - need balancing to prevent cheesing
 		$isCritical = (Get-Random -Maximum 100) -lt $global:Player.CriticalChance
 		if ($isCritical) {
 		    $damage = [Math]::Round($baseDamage * $global:Player.CriticalMultiplier)
-		    Write-Typewriter "CRITICAL HIT! You attack the $($monster.Name) for $damage damage! 💥" -Color Cyan -Delay 20
+		    Write-Typewriter "CRITICAL HIT! You attack the $($monster.Name) for $damage damage!" -Color Cyan -Delay 20
 		    # Write-Host "CRITICAL HIT! You attack the $($monster.Name) for $damage damage!" -ForegroundColor Cyan
 		} else {
 		    $damage = $baseDamage
@@ -336,7 +335,7 @@ function Start-Combat {
 	    if ($monster.IsBoss -and (Get-Random -Maximum 100) -lt 25) {
 		$baseDamage = [Math]::Max(2, ($monster.Attack * 1.5) - $global:Player.Defense)
 		
-		# Critical hit check for boss special
+		# Critical hit check for boss special - maybe need to nerf
 		$isCritical = (Get-Random -Maximum 100) -lt $monster.CriticalChance
 		if ($isCritical) {
 		    $specialDamage = [Math]::Round($baseDamage * $monster.CriticalMultiplier)
@@ -381,7 +380,7 @@ function Start-Combat {
 	if ($monster.IsBoss) {
     $global:BossesDefeated++
     Write-Typewriter "*** BOSS DEFEATED! ***" -ForegroundColor Magenta
-}
+	}
         
         Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
         return $true
@@ -592,3 +591,4 @@ function Start-Game {
 
 # Start the game
 Start-Game
+
