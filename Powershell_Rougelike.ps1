@@ -314,6 +314,7 @@ function Start-Combat {
     Write-Host "Monster HP: $monsterHealth | Attack: $($monster.Attack) | Defense: $($monster.Defense)" -ForegroundColor DarkRed
     
     $playerTurn = $global:Player.Speed -ge (Get-Random -Minimum 1 -Maximum 10)
+
     while ($monsterHealth -gt 0 -and $global:Player.Health -gt 0) {
         if ($playerTurn) {
             Write-Host "`n=== YOUR TURN ===" -ForegroundColor Green
@@ -450,63 +451,78 @@ function Start-Combat {
         }
     }
     
-    # Critical hit check for boss special
-    $isCritical = (Get-Random -Maximum 100) -lt $monster.CriticalChance
-    if ($isCritical -and $monster.SpecialEffect -ne "critical") {
-        $specialDamage = [Math]::Round($baseDamage * $monster.CriticalMultiplier)
-        Write-Typewriter "CRITICAL HIT! The $($monster.Name) $($monster.SpecialDescription) for $specialDamage damage$effectMessage" -Color DarkRed -Delay 20
-    } else {
-        $specialDamage = $baseDamage
-        Write-Typewriter "The $($monster.Name) $($monster.SpecialDescription) for $specialDamage damage$effectMessage" -Color Red -Delay 20
-    }
-    
-    # Apply damage - ONLY ONCE
-    $global:Player.Health -= $specialDamage
-    if ($additionalDamage -gt 0) {
-        $global:Player.Health -= $additionalDamage
-    }
+	    # Critical hit check for boss special
+	    $isCritical = (Get-Random -Maximum 100) -lt $monster.CriticalChance
+	    if ($isCritical -and $monster.SpecialEffect -ne "critical") {
+		$specialDamage = [Math]::Round($baseDamage * $monster.CriticalMultiplier)
+		Write-Typewriter "CRITICAL HIT! The $($monster.Name) $($monster.SpecialDescription) for $specialDamage damage$effectMessage" -Color DarkRed -Delay 20
+	    } else {
+		$specialDamage = $baseDamage
+		Write-Typewriter "The $($monster.Name) $($monster.SpecialDescription) for $specialDamage damage$effectMessage" -Color Red -Delay 20
+	    }
+	    
+	    # Apply damage - ONLY ONCE
+	    $global:Player.Health -= $specialDamage
+	    if ($additionalDamage -gt 0) {
+		$global:Player.Health -= $additionalDamage
+	    }
+		} else {
+		$baseDamage = [Math]::Max(1, $monster.Attack - $global:Player.Defense + (Get-Random -Minimum -1 -Maximum 2))
+		
+		# Critical hit check for normal monster attack
+		$isCritical = (Get-Random -Maximum 100) -lt $monster.CriticalChance
+		if ($isCritical) {
+		    $damage = [Math]::Round($baseDamage * $monster.CriticalMultiplier)
+		    Write-Typewriter "CRITICAL HIT! The $($monster.Name) attacks you for $damage damage!" -ForegroundColor DarkRed
+		} else {
+		    $damage = $baseDamage
+		    Write-Host "The $($monster.Name) attacks you for $damage damage!" -ForegroundColor Red
+		}
+		$global:Player.Health -= $damage
+	    }
+
+		}
+		# Show combat status
+		Write-Typewriter "`nYour HP: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Green
+		Write-Typewriter "$($monster.Name) HP: $monsterHealth/$($monster.Health)" -ForegroundColor Red
+		
+		$playerTurn = !$playerTurn
+	    }
+	    
+	    if ($global:Player.Health -le 0) {
+		Write-Typewriter "`nYou have been defeated..." -ForegroundColor DarkRed
+		return $false
+	    } else {
+		Write-Host "`nYou defeated the $($monster.Name)!" -ForegroundColor Green
+		$goldEarned = $monster.Gold
+		$xpEarned = $monster.XP
+		$global:Player.Gold += $goldEarned
+		$global:Player.Experience += $xpEarned
+		$global:MonstersDefeated++
+		if ($monster.IsBoss) {
+	    $global:BossesDefeated++
+	    Write-Typewriter "*** BOSS DEFEATED! ***" -ForegroundColor Magenta
+		}    
+		Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
+		return $true
+	    }
+			# Reset any temporary stat changes after combat
+		if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
+		# Reset to base + level progression (simplified calculation)
+		$global:Player.Attack = $ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2)
+		if ($global:Player.Ascension) {
+		    $global:Player.Attack += $AscensionBonuses[$global:Player.Ascension].Attack
+		}
+	    }
+	    
+	    if ($global:Player.Defense -lt ($ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1))) {
+		# Reset to base + level progression
+		$global:Player.Defense = $ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1)
+		if ($global:Player.Ascension) {
+		    $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
+		}
+	}
 }
-	}
-	# Show combat status
-        Write-Typewriter "`nYour HP: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Green
-        Write-Typewriter "$($monster.Name) HP: $monsterHealth/$($monster.Health)" -ForegroundColor Red
-        
-        $playerTurn = !$playerTurn
-    }
-    
-    if ($global:Player.Health -le 0) {
-        Write-Typewriter "`nYou have been defeated..." -ForegroundColor DarkRed
-        return $false
-    } else {
-        Write-Host "`nYou defeated the $($monster.Name)!" -ForegroundColor Green
-        $goldEarned = $monster.Gold
-        $xpEarned = $monster.XP
-        $global:Player.Gold += $goldEarned
-        $global:Player.Experience += $xpEarned
-        $global:MonstersDefeated++
-	if ($monster.IsBoss) {
-    $global:BossesDefeated++
-    Write-Typewriter "*** BOSS DEFEATED! ***" -ForegroundColor Magenta
-	}    
-        Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
-        return $true
-    }
-		# Reset any temporary stat changes after combat
-    	if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
-        # Reset to base + level progression (simplified calculation)
-        $global:Player.Attack = $ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2)
-        if ($global:Player.Ascension) {
-            $global:Player.Attack += $AscensionBonuses[$global:Player.Ascension].Attack
-        }
-    }
-    
-    if ($global:Player.Defense -lt ($ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1))) {
-        # Reset to base + level progression
-        $global:Player.Defense = $ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1)
-        if ($global:Player.Ascension) {
-            $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
-        }
-	}
 
 function Level-Up {
     while ($global:Player.Experience -ge $global:Player.ExperienceToNextLevel) {
