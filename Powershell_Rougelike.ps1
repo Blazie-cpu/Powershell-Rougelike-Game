@@ -361,17 +361,24 @@ function Start-Combat {
 		    continue
 		}
 	    }
-	    '3' {
-                    if ($global:Player.Gold -ge 5) {
-                        $global:Player.Gold -= 5
-                        $heal = 15
-                        $global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $heal)
-                        Write-Host "You use a potion and heal $heal health!" -ForegroundColor Green
-                    } else {
-                        Write-Host "Not enough gold!" -ForegroundColor Red
-                        continue
-                    }
-                }
+		'3' {
+		    $healCost = 5 + [Math]::Floor($global:Player.Level / 3)  # Cost increases every 3 levels
+		    if ($global:Player.Gold -ge $healCost) {
+			$global:Player.Gold -= $healCost
+			
+			# Healing calculation as above
+			$baseHeal = 20
+			$levelBonus = $global:Player.Level * 3
+			$healthPercentage = $global:Player.MaxHealth * 0.15
+			$heal = $baseHeal + $levelBonus + [Math]::Round($healthPercentage)
+			
+			$global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $heal)
+			Write-Host "You use a potion (cost: $healCost gold) and heal $heal health!" -ForegroundColor Green
+		    } else {
+			Write-Host "Not enough gold! Need $healCost gold." -ForegroundColor Red
+			continue
+		    }
+		}
                 '4' {
                     if ((Get-Random -Maximum 100) -lt 40) {
                         Write-Typewriter "You successfully fled from combat!" -ForegroundColor Green
