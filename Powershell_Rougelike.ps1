@@ -536,7 +536,7 @@ function Show-Spells {
 function Get-RandomMonster {
     # Check for boss every 3 floors
     $isBossFloor = $global:CurrentFloor % 3 -eq 0
-    $isBoss = $isBossFloor -and (Get-Random -Maximum 100) -lt 5  # Encounter percentage - Tuned this value to make it fair.
+    $isBoss = $isBossFloor -and (Get-Random -Maximum 100) -lt 3  # Encounter percentage - Tuned this value to make it fair (current 3%).
     
     if ($isBoss) {
         $boss = $BossTypes[(Get-Random -Maximum $BossTypes.Count)].Clone()
@@ -567,7 +567,7 @@ function Get-RandomMonster {
         $baseMonster = $MonsterTypes[$monsterIndex].Clone()
         
 # Scale monster stats calculation based on floor level
-	$scaleFactor = 1 + ($global:CurrentFloor * 0.3)
+	$scaleFactor = 1 + ($global:CurrentFloor * 0.3) + ($global:Player.Level * 0.2) #Monster will scale up according to player level
 	$baseMonster.Health = [Math]::Round($baseMonster.Health * $scaleFactor)
 	$baseMonster.Attack = [Math]::Round($baseMonster.Attack * $scaleFactor)
 	$baseMonster.Defense = [Math]::Round($baseMonster.Defense * $scaleFactor)
