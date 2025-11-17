@@ -579,8 +579,7 @@ function Get-RandomMonster {
         
         Write-Typewriter "`n*** BOSS ENCOUNTER! ***" -ForegroundColor Red
         return $boss
-    }
-	} else {
+    } else {
 	    # Automatic tier-based monster selection
 	    $currentTier = [Math]::Min([Math]::Ceiling($global:CurrentFloor / 3), 5)
 	    
@@ -603,7 +602,7 @@ function Get-RandomMonster {
 	    }
 	    
 	    # Scale monster stats based on floor level
-	    $scaleFactor = 1 + ($global:CurrentFloor * 0.15)
+	    $scaleFactor = 1 + ($global:CurrentFloor * 0.15) + ($global:Player.Level * 0.2)
 	    $baseMonster.Health = [Math]::Round($baseMonster.Health * $scaleFactor)
 	    $baseMonster.Attack = [Math]::Round($baseMonster.Attack * $scaleFactor)
 	    $baseMonster.Defense = [Math]::Round($baseMonster.Defense * $scaleFactor)
