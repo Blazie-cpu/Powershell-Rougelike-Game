@@ -560,7 +560,7 @@ function Get-RandomMonster {
         $boss = $BossTypes[(Get-Random -Maximum $BossTypes.Count)].Clone()
         
         # Scale boss stats based on player level and stats (balance as needed)
-		$scaleFactor = 1 + ($global:Player.Level * 0.10) + ($global:Player.Attack * 0.10) + ($global:CurrentFloor * 0.1) + ($global.Player.Level * 0.2)
+		$scaleFactor = 1 + ($global:Player.Level * 0.10) + ($global:CurrentFloor * 0.1) + ($global.Player.Level * 0.3)
 		$boss.Health = [Math]::Round($boss.BaseHealth * $scaleFactor)
 		$boss.Attack = [Math]::Round($boss.BaseAttack * $scaleFactor)
 		$boss.Defense = [Math]::Round($boss.BaseDefense * $scaleFactor)
