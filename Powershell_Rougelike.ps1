@@ -626,7 +626,7 @@ function Show-Spells {
     foreach ($spell in $spells) {
         if ($spell.Type -eq "Damage") {
             # Calculate damage using the new structure
-            $estimatedDamage = [Math]::Round($spell.BaseDamage + ($global:Player.Level * $spell.DamagePerLevel) + ($global:Player.Attack * $spell.DamagePerAttack))
+            $estimatedDamage = [Math]::Round($spell.BaseDamage + ($global:Player.Level * $spell.DamagePerLevel) + ($global:Player.MaxMana * $spell.DamagePerAttack))
             
             Write-Host "$($spell.Name): $($spell.Description)" -ForegroundColor White
             Write-Host "  Damage: ~$estimatedDamage | Mana Cost: $($spell.ManaCost)" -ForegroundColor Gray
@@ -897,7 +897,7 @@ function Get-RandomMonster {
         $boss = $BossTypes[(Get-Random -Maximum $BossTypes.Count)].Clone()
         
         # Scale boss stats based on player level and stats (balance as needed)
-		$scaleFactor = 1 + ($global:Player.Level * 0.10) + ($global:CurrentFloor * 0.1) + ($global.Player.Level * 0.3)
+		$scaleFactor = 2 + ($global:CurrentFloor * 0.5) + ($global.Player.Level * 0.5) + ($global.Player.ExperienceToNextLevel * 0.0001)
 		$boss.Health = [Math]::Round($boss.BaseHealth * $scaleFactor)
 		$boss.Attack = [Math]::Round($boss.BaseAttack * $scaleFactor)
 		$boss.Defense = [Math]::Round($boss.BaseDefense * $scaleFactor)
@@ -1035,7 +1035,7 @@ function Start-Combat {
 		    
 		    if ($spell.Type -eq "Damage") {
 			# Calculate damage using the new simplified structure
-			$estimatedDamage = [Math]::Round($spell.BaseDamage + ($global:Player.Level * $spell.DamagePerLevel) + ($global:Player.Attack * $spell.DamagePerAttack))
+			$estimatedDamage = [Math]::Round($spell.BaseDamage + ($global:Player.Level * $spell.DamagePerLevel) + ($global:Player.MaxMana * $spell.DamagePerAttack))
 			Write-Host "$spellNumber. $($spell.Name) - $($spell.Description) (Mana: $($spell.ManaCost), Damage: ~$estimatedDamage)"
 		    } else {
 			# Calculate heal using the new simplified structure
@@ -1053,7 +1053,7 @@ function Start-Combat {
 	    }
 	    
 	    # Standardized options for all classes
-	    Write-Host "6. Use Potion (5 gold)" -ForegroundColor White
+	    Write-Host "6. Use Potion (12 gold)" -ForegroundColor White
 	    Write-Host "7. Flee" -ForegroundColor White
 	    
 	    $choice = Read-Host "Choose action"
@@ -1098,7 +1098,7 @@ function Start-Combat {
 				
 				if ($selectedSpell.Type -eq "Damage") {
 				    # Calculate spell damage
-				    $baseSpellDamage = [Math]::Round($selectedSpell.BaseDamage + ($global:Player.Level * $selectedSpell.DamagePerLevel) + ($global:Player.Attack * $selectedSpell.DamagePerAttack))
+				    $baseSpellDamage = [Math]::Round($selectedSpell.BaseDamage + ($global:Player.Level * $selectedSpell.DamagePerLevel) + ($global:Player.MaxMana * $selectedSpell.DamagePerAttack))
 				    
 				    # Apply elemental bonus if applicable
 				    $elementalBonus = 1.0
@@ -1176,27 +1176,41 @@ function Start-Combat {
 		    }
 		    
 		    # Potion for all classes (option 6)
-		    '6' {
-			if ($global:Player.Gold -ge 5) {
-			    $global:Player.Gold -= 5
-			    
-			    # Scaled healing
-			    $baseHeal = 20
-			    $levelBonus = $global:Player.Level * 3
-			    $healthPercentage = $global:Player.MaxHealth * 0.15
-			    $heal = $baseHeal + $levelBonus + [Math]::Round($healthPercentage)
-			    
-			    $oldHealth = $global:Player.Health
-			    $global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $heal)
-			    $actualHeal = $global:Player.Health - $oldHealth
-			    
-			    Write-Host "You use a potion and heal $actualHeal health!" -ForegroundColor Green
-			    Write-Host "Current HP: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Green
-			} else {
-			    Write-Host "Not enough gold!" -ForegroundColor Red
-			    continue
+			'6' {
+			    if ($global:Player.Gold -ge 12) {
+				$global:Player.Gold -= 12
+				
+				# Scaled healing for health
+				$baseHeal = 20
+				$levelBonus = $global:Player.Level * 3
+				$healthPercentage = $global:Player.MaxHealth * 0.15
+				$heal = $baseHeal + $levelBonus + [Math]::Round($healthPercentage)
+				
+				# Scaled restoration for mana
+				$baseManaRestore = 15
+				$levelManaBonus = $global:Player.Level * 2
+				$manaPercentage = $global:Player.MaxMana * 0.10
+				$manaRestore = $baseManaRestore + $levelManaBonus + [Math]::Round($manaPercentage)
+
+				$oldHealth = $global:Player.Health
+				$oldMana = $global:Player.Mana
+				
+				# Apply healing
+				$global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $heal)
+				$actualHeal = $global:Player.Health - $oldHealth
+				
+				# Apply mana restoration
+				$global:Player.Mana = [Math]::Min($global:Player.MaxMana, $global:Player.Mana + $manaRestore)
+				$actualManaRestore = $global:Player.Mana - $oldMana
+				
+				Write-Host "You use a potion and heal $actualHeal health and restore $actualManaRestore mana!" -ForegroundColor Green
+				Write-Host "Current HP: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Green
+				Write-Host "Current Mana: $($global:Player.Mana)/$($global:Player.MaxMana)" -ForegroundColor Blue
+			    } else {
+				Write-Host "Not enough gold!" -ForegroundColor Red
+				continue
+			    }
 			}
-		    }
 		    
 		    # Flee for all classes (option 7)
 		    '7' {
