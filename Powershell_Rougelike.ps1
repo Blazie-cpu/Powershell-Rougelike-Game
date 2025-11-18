@@ -38,6 +38,8 @@ function Write-Quick {
     Write-Host "" #page break
 }
 
+#SECTION -- Main Game function
+
 function Show-WelcomeScreen {
     Clear-Host
     Write-Host "==========================================" -ForegroundColor Cyan
@@ -123,7 +125,7 @@ $AscensionBonuses = @{
     Saint = @{ Health = 25; Mana = 18; Attack = 2; Defense = 7; Speed = 1 }
 }
 
-# Spell Definitions
+
 # Spell Definitions (simplified without script blocks)
 $ClassSpells = @{
     "Mage" = @(
@@ -211,11 +213,11 @@ $ClassSpells = @{
     )
 }
 
-# Elemental weaknesses/resistances
+# Elemental weaknesses/resistances - 1.x = xx% damage.
 $ElementalEffects = @{
     "Fire" = @{ 
         Description = "burns intensely"; 
-        BonusDamage = 1.2  # 20% bonus damage
+        BonusDamage = 1.2 
     }
     "Ice" = @{ 
         Description = "freezes the target"; 
@@ -263,9 +265,9 @@ $MonsterTypes = @(
     
     # Tier 5: Late game monsters
     @{ Name = "Chaos Demon"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50; Tier = 5 },
-    @{ Name = "Nightmare"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50; Tier = 5 },
-    @{ Name = "High Lich Priest"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50; Tier = 5 },
-    @{ Name = "Orc Lord"; Health = 50; Attack = 18; Defense = 6; XP = 75; Gold = 50; Tier = 5 }
+    @{ Name = "Nightmare"; Health = 38; Attack = 16; Defense = 5; XP = 85; Gold = 60; Tier = 5 },
+    @{ Name = "High Lich Priest"; Health = 38; Attack = 12; Defense = 9; XP = 75; Gold = 50; Tier = 5 },
+    @{ Name = "Orc Lord"; Health = 50; Attack = 18; Defense = 6; XP = 75; Gold = 90; Tier = 5 }
 )
 
 # Boss Definitions - Need more variant
@@ -275,7 +277,7 @@ $BossTypes = @(
     @{ Name = "Archlich"; BaseHealth = 40; BaseAttack = 18; BaseDefense = 6; XP = 220; Gold = 90 },
     @{ Name = "Chaos God"; BaseHealth = 55; BaseAttack = 16; BaseDefense = 10; XP = 250; Gold = 150 },
     @{ Name = "Death Eater"; BaseHealth = 50; BaseAttack = 4; BaseDefense = 20; XP = 350; Gold = 150 },
-    @{ Name = "World Eater"; BaseHealth = 70; BaseAttack = 14; BaseDefense = 14; XP = 300; Gold = 200 }
+    @{ Name = "World Eater"; BaseHealth = 70; BaseAttack = 10; BaseDefense = 14; XP = 380; Gold = 200 }
 )
 
 # Add more boss special abilities.
@@ -336,35 +338,37 @@ $global:MaxArtifacts = 5  # Maximum artifacts player can carry
 
 # Low Tier Artifacts - dropped from normal monsters (low chance)
 $LowTierArtifacts = @(
-    @{ Name = "Rusty Amulet"; Description = "An old, tarnished amulet"; Stats = @{ Health = 5; Attack = 1 } },
+    @{ Name = "Rusty Amulet"; Description = "An old, tarnished amulet"; Stats = @{ Health = 10; Attack = 1 } },
     @{ Name = "Cracked Ring"; Description = "A ring with a hairline fracture"; Stats = @{ Defense = 2; Mana = 3 } },
-    @{ Name = "Faded Cloak"; Description = "A cloak that has seen better days"; Stats = @{ Speed = 1; Health = 3 } },
-    @{ Name = "Chipped Blade"; Description = "A blade with several notches"; Stats = @{ Attack = 2; CriticalChance = 2 } },
-    @{ Name = "Weathered Shield"; Description = "A shield bearing many scars"; Stats = @{ Defense = 3; Health = 2 } },
+    @{ Name = "Faded Cloak"; Description = "A cloak that has seen better days"; Stats = @{ Speed = 2; Health = 5 } },
+    @{ Name = "Tarnished Dagger"; Description = "A dull blade once of the damn"; Stats = @{ Attack = 8; CriticalChance = 5; CriticalMultiplier = 0.4 } },
+    @{ Name = "Cracked Orb of Health"; Description = "Once used to give vitality, cracked beyond salvation"; Stats = @{ Defense = 2; Health = 10 } },
+    @{ Name = "Chipped Blade"; Description = "A blade with several notches"; Stats = @{ Attack = 8; CriticalChance = 2 } },
+    @{ Name = "Weathered Shield"; Description = "A shield bearing many scars"; Stats = @{ Defense = 6; Health = 2 } },
     @{ Name = "Dull Crystal"; Description = "A crystal that barely glows"; Stats = @{ Mana = 5; CriticalMultiplier = 0.1 } },
-    @{ Name = "Ancient Bone"; Description = "A bone inscribed with faint runes"; Stats = @{ Attack = 1; Defense = 1; Health = 2 } },
+    @{ Name = "Ancient Bone"; Description = "A bone inscribed with faint runes"; Stats = @{ Attack = 2; Defense = 1; Health = 2 } },
     @{ Name = "Tarnished Locket"; Description = "A locket that holds a faded picture"; Stats = @{ Health = 4; Mana = 2; Speed = 1 } },
     @{ Name = "Fractured Orb"; Description = "An orb that hums with weak energy"; Stats = @{ Mana = 4; CriticalChance = 1 } },
-    @{ Name = "Worn Bracers"; Description = "Bracers that fit perfectly"; Stats = @{ Defense = 2; Speed = 1; Attack = 1 } }
+    @{ Name = "Worn Bracers"; Description = "Bracers that fit perfectly"; Stats = @{ Defense = 3; Speed = 2; Attack = 1 } }
 )
 
 # High Tier Artifacts - dropped from bosses (even lower chance)
 $HighTierArtifacts = @(
-    @{ Name = "Amulet of the Void"; Description = "An amulet that drinks the light around it"; Stats = @{ Health = 15; Attack = 3; CriticalChance = 5 } },
-    @{ Name = "Ring of Eternal Night"; Description = "A ring that feels unnaturally cold"; Stats = @{ Defense = 5; Mana = 10; CriticalMultiplier = 0.5 } },
-    @{ Name = "Cloak of Shadows"; Description = "A cloak that seems to blend with darkness"; Stats = @{ Speed = 3; Health = 10; CriticalChance = 3 } },
-    @{ Name = "Blade of the Abyss"; Description = "A blade that whispers promises of power"; Stats = @{ Attack = 5; CriticalChance = 7; CriticalMultiplier = 0.3 } },
-    @{ Name = "Shield of the Titan"; Description = "A shield that feels impossibly heavy"; Stats = @{ Defense = 8; Health = 12; Speed = -1 } },
-    @{ Name = "Crystal of Infinite Potential"; Description = "A crystal that contains swirling galaxies"; Stats = @{ Mana = 15; CriticalMultiplier = 0.7; Attack = 2 } },
-    @{ Name = "Bone of the First Lich"; Description = "A bone that pulses with necrotic energy"; Stats = @{ Attack = 4; Defense = 3; Health = 8; Mana = 5 } },
-    @{ Name = "Locket of Lost Souls"; Description = "A locket that occasionally whispers"; Stats = @{ Health = 12; Mana = 8; Speed = 2; CriticalChance = 2 } },
-    @{ Name = "Orb of Cosmic Truth"; Description = "An orb that shows impossible geometries"; Stats = @{ Mana = 12; CriticalChance = 4; CriticalMultiplier = 0.4; Defense = 2 } },
-    @{ Name = "Bracers of Divine Wrath"; Description = "Bracers that glow with holy fire"; Stats = @{ Defense = 4; Speed = 2; Attack = 3; CriticalChance = 3 } },
-    @{ Name = "Crown of the Fallen King"; Description = "A crown that weighs heavy with regret"; Stats = @{ Health = 20; Mana = 10; Attack = 2; Defense = 2 } },
-    @{ Name = "Scepter of Unmaking"; Description = "A scepter that warps reality around it"; Stats = @{ Attack = 6; CriticalMultiplier = 0.6; Mana = 8; Speed = 1 } }
+    @{ Name = "Amulet of the Void"; Description = "An amulet that drinks the light around it"; Stats = @{ Health = 35; Attack = 3; CriticalChance = 5 } },
+    @{ Name = "Ring of Eternal Night"; Description = "A ring that feels unnaturally cold"; Stats = @{ Defense = 5; Mana = 25; CriticalMultiplier = 1 } },
+    @{ Name = "Cloak of Shadows"; Description = "A cloak that seems to blend with darkness"; Stats = @{ Speed = 10; Health = 45; CriticalChance = 10 } },
+    @{ Name = "Blade of the Abyss"; Description = "A blade that whispers promises of power"; Stats = @{ Attack = 25; CriticalChance = 7; CriticalMultiplier = 0.3 } },
+    @{ Name = "Shield of the Titan"; Description = "A shield that feels impossibly heavy"; Stats = @{ Defense = 30; Health = 20; Speed = -5 } },
+    @{ Name = "Crystal of Infinite Potential"; Description = "A crystal that contains swirling galaxies"; Stats = @{ Mana = 55; CriticalMultiplier = 0.7; Attack = 2 } },
+    @{ Name = "Bone of the First Lich"; Description = "A bone that pulses with necrotic energy"; Stats = @{ Attack = 20; Defense = -15; Health = 85; Mana = 35 } },
+    @{ Name = "Locket of Lost Souls"; Description = "A locket that occasionally whispers"; Stats = @{ Health = 42; Mana = 28; Speed = 2; CriticalChance = 2 } },
+    @{ Name = "Orb of Cosmic Truth"; Description = "An orb that shows impossible geometries"; Stats = @{ Mana = 32; CriticalChance = 4; CriticalMultiplier = 0.4; Defense = 2 } },
+    @{ Name = "Bracers of Divine Wrath"; Description = "Bracers that glow with holy fire"; Stats = @{ Defense = 14; Speed = 3; Attack = 23; CriticalChance = 3 } },
+    @{ Name = "Crown of the Fallen King"; Description = "A crown that weighs heavy with regret"; Stats = @{ Health = 80; Mana = 30; Attack = 22; Defense = 12 } },
+    @{ Name = "Scepter of Unmaking"; Description = "A scepter that warps reality around it"; Stats = @{ Attack = 40; CriticalMultiplier = 1; Mana = 8; Speed = -5 } }
 )
 
-#Main game function goes here
+#Main game function here
 
 function Show-Title {
     Clear-Host
@@ -552,10 +556,21 @@ function Show-Spells {
 }
 
 function Get-RandomMonster {
-    # Check for boss every 3 floors
+    # Boss spawn logic: higher chance on boss floors (every 3 floors), lower chance on other floors
     $isBossFloor = $global:CurrentFloor % 3 -eq 0
-    $isBoss = $isBossFloor -and (Get-Random -Maximum 100) -lt 3  # Encounter percentage - Tuned this value to make it fair (current 3%).
     
+    # Calculate boss chance - higher on boss floors, lower on regular floors
+    if ($isBossFloor) {
+        $bossChance = 30  # 30% chance on boss floors (every 3 floors)
+    } else {
+        # Gradually increasing chance on non-boss floors based on floor level
+        $baseChance = 0.5   # Base 0.5% chance on normal floors
+        $floorBonus = [Math]::Min($global:CurrentFloor * 0.05, 0.1)  # +0.05% per floor, max +0.1% to prevent early death
+        $bossChance = $baseChance + $floorBonus
+    }
+    
+    $isBoss = (Get-Random -Maximum 100) -lt $bossChance
+
     if ($isBoss) {
         $boss = $BossTypes[(Get-Random -Maximum $BossTypes.Count)].Clone()
         
@@ -577,7 +592,7 @@ function Get-RandomMonster {
 		$boss.SpecialMultiplier = $randomAbility.DamageMultiplier
 		$boss.SpecialEffect = $randomAbility.Effect
         
-        Write-Typewriter "`n*** BOSS ENCOUNTER! ***" -ForegroundColor Red
+        Write-Typewriter "`n*** BOSS ENCOUNTER! ***" -ForegroundColor Red -Delay 50
         return $boss
     } else {
 	    # Automatic tier-based monster selection
@@ -891,7 +906,7 @@ function Start-Combat {
     
     switch ($monster.SpecialEffect) {
         "lifedrain" {
-            $healAmount = [Math]::Round($baseDamage * 0.3)  # Reduced from 0.5
+            $healAmount = [Math]::Round($baseDamage * 0.25)  # Reduced from 0.5
             $monsterHealth += $healAmount
             $monsterHealth = [Math]::Min($monster.Health, $monsterHealth)
             $effectMessage = " and drains $healAmount health from you!"
@@ -920,17 +935,17 @@ function Start-Combat {
             }
         }
         "sacrifice" {
-            # Boss takes some damage but gains more
-            $bossSelfDamage = [Math]::Round($baseDamage * 0.2)  # Reduced from 0.3
+            # Boss takes some damage but gains more - subject to rebalancing.
+            $bossSelfDamage = [Math]::Round($baseDamage * 0.5)
             $monsterHealth -= $bossSelfDamage
-            $healAmount = [Math]::Round($baseDamage * 0.5)  # Reduced from 0.8
+            $healAmount = [Math]::Round($baseDamage * 0.3)
             $monsterHealth += $healAmount
             $monsterHealth = [Math]::Min($monster.Health, $monsterHealth)
             $effectMessage = " sacrificing $bossSelfDamage health but gaining $healAmount!"
         }
         "armorbreak" {
             # Reduce player defense
-            $defenseReduction = 1  # Reduced from 2
+            $defenseReduction = 2  # Reduced from 2
             $global:Player.Defense = [Math]::Max(0, $global:Player.Defense - $defenseReduction)
             $effectMessage = " breaking your armor and reducing defense by $defenseReduction!"
         }
@@ -1005,7 +1020,7 @@ function Start-Combat {
 		    Write-Host "Press any key to face your fate..." -ForegroundColor Gray
 		    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 		    return $false
-	    } else {
+		    } else {
 			Write-Host "`nYou defeated the $($monster.Name)!" -ForegroundColor Green
 			$goldEarned = $monster.Gold
 			$xpEarned = $monster.XP
@@ -1020,59 +1035,60 @@ function Start-Combat {
 
 			Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
 
-# Check for level up after combat victory
+			# Check for level up after combat victory
 			Level-Up
+
+			# Check for artifact drops
+			if ($victory) {
+			    # Check for low tier artifact from normal monsters (2% chance)
+			    if (!$monster.IsBoss -and (Get-Random -Maximum 100) -lt 2) {
+				$newArtifact = Get-RandomArtifact -Tier "Low"
+				if ($global:PlayerArtifacts.Count -lt $global:MaxArtifacts) {
+				    $global:PlayerArtifacts += $newArtifact
+				    Apply-ArtifactStats -Artifact $newArtifact
+				    Write-Typewriter "*** You found a rare artifact: $($newArtifact.Name) ***" -Color Yellow -Delay 40
+				    Write-Host "$($newArtifact.Description)" -ForegroundColor Gray
+				    Show-ArtifactStats -Artifact $newArtifact
+				} else {
+				    Write-Host "You found an artifact but your inventory is full!" -ForegroundColor Yellow
+				}
+			    }
+			    
+			# Check for high tier artifact from bosses (5% chance)
+			    if ($monster.IsBoss -and (Get-Random -Maximum 100) -lt 5) {
+				$newArtifact = Get-RandomArtifact -Tier "High"
+				if ($global:PlayerArtifacts.Count -lt $global:MaxArtifacts) {
+				    $global:PlayerArtifacts += $newArtifact
+				    Apply-ArtifactStats -Artifact $newArtifact
+				    Write-Typewriter "*** The boss dropped a legendary artifact: $($newArtifact.Name) ***" -Color Magenta -Delay 50
+				    Write-Host "$($newArtifact.Description)" -ForegroundColor Gray
+				    Show-ArtifactStats -Artifact $newArtifact
+				} else {
+				    Write-Host "The boss dropped an artifact but your inventory is full!" -ForegroundColor Yellow
+				}
+			    }
+			}
 
 			Write-Host "Press any key to continue..." -ForegroundColor Gray
 			$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 			return $true	   
 			}
 			# Reset any temporary stat changes after combat
-		if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
-		# Reset to base + level progression (simplified calculation)
-		$global:Player.Attack = $ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2)
-		if ($global:Player.Ascension) {
-		    $global:Player.Attack += $AscensionBonuses[$global:Player.Ascension].Attack
-		}
-	    }
-	    
-	    if ($global:Player.Defense -lt ($ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1))) {
-		# Reset to base + level progression
-		$global:Player.Defense = $ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1)
-		if ($global:Player.Ascension) {
-		    $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
-		}
-	}
-		# Check for artifact drops
-		if ($victory) {
-		    # Check for low tier artifact from normal monsters (2% chance)
-		    if (!$monster.IsBoss -and (Get-Random -Maximum 100) -lt 2) {
-			$newArtifact = Get-RandomArtifact -Tier "Low"
-			if ($global:PlayerArtifacts.Count -lt $global:MaxArtifacts) {
-			    $global:PlayerArtifacts += $newArtifact
-			    Apply-ArtifactStats -Artifact $newArtifact
-			    Write-Typewriter "*** You found a rare artifact: $($newArtifact.Name) ***" -Color Yellow -Delay 40
-			    Write-Host "$($newArtifact.Description)" -ForegroundColor Gray
-			    Show-ArtifactStats -Artifact $newArtifact
-			} else {
-			    Write-Host "You found an artifact but your inventory is full!" -ForegroundColor Yellow
-			}
-		    }
-		    
-		# Check for high tier artifact from bosses (5% chance)
-		    if ($monster.IsBoss -and (Get-Random -Maximum 100) -lt 5) {
-			$newArtifact = Get-RandomArtifact -Tier "High"
-			if ($global:PlayerArtifacts.Count -lt $global:MaxArtifacts) {
-			    $global:PlayerArtifacts += $newArtifact
-			    Apply-ArtifactStats -Artifact $newArtifact
-			    Write-Typewriter "*** The boss dropped a legendary artifact: $($newArtifact.Name) ***" -Color Magenta -Delay 50
-			    Write-Host "$($newArtifact.Description)" -ForegroundColor Gray
-			    Show-ArtifactStats -Artifact $newArtifact
-			} else {
-			    Write-Host "The boss dropped an artifact but your inventory is full!" -ForegroundColor Yellow
-			}
-		    }
-		}
+				if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
+				# Reset to base + level progression (simplified calculation)
+				$global:Player.Attack = $ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2)
+				if ($global:Player.Ascension) {
+				    $global:Player.Attack += $AscensionBonuses[$global:Player.Ascension].Attack
+				}
+			    }
+			    
+			    if ($global:Player.Defense -lt ($ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1))) {
+				# Reset to base + level progression
+				$global:Player.Defense = $ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1)
+				if ($global:Player.Ascension) {
+				    $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
+					}
+				}
 
 }
 
@@ -1329,49 +1345,60 @@ function Visit-Shop {
                 Write-Host "Critical multiplier increased by 0.5! Current: $($global:Player.CriticalMultiplier)x" -ForegroundColor Cyan
             }
 	    '8' {
-		if ($global:PlayerArtifacts.Count -eq 0) {
-		    Write-Host "You have no artifacts to sell!" -ForegroundColor Red
-		    return
-		}
-		
-		Write-Host "`nSelect artifact to sell:" -ForegroundColor Yellow
-		for ($i = 0; $i -lt $global:PlayerArtifacts.Count; $i++) {
-		    $artifact = $global:PlayerArtifacts[$i]
-		    Write-Host "$($i + 1). $($artifact.Name) - $($artifact.Description)" -ForegroundColor White
-		}
-		Write-Host "0. Cancel" -ForegroundColor Gray
-		
-		$sellChoice = Read-Host "`nSelect artifact"
-		if ($sellChoice -eq '0') { return }
-		
-		$artifactIndex = [int]$sellChoice - 1
-		if ($artifactIndex -ge 0 -and $artifactIndex -lt $global:PlayerArtifacts.Count) {
-		    $soldArtifact = $global:PlayerArtifacts[$artifactIndex]
-		    
-		    # Remove artifact bonuses
-		    foreach ($stat in $soldArtifact.Stats.Keys) {
-			switch ($stat) {
-			    "Health" { 
-				$global:Player.MaxHealth -= $soldArtifact.Stats[$stat]
-				$global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
-			    }
-			    "Mana" { 
-				$global:Player.MaxMana -= $soldArtifact.Stats[$stat]
-				$global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
-			    }
-			    "Attack" { $global:Player.Attack -= $soldArtifact.Stats[$stat] }
-			    "Defense" { $global:Player.Defense -= $soldArtifact.Stats[$stat] }
-			    "Speed" { $global:Player.Speed -= $soldArtifact.Stats[$stat] }
-			    "CriticalChance" { $global:Player.CriticalChance -= $soldArtifact.Stats[$stat] }
-			    "CriticalMultiplier" { $global:Player.CriticalMultiplier -= $soldArtifact.Stats[$stat] }
-			}
+		    if ($global:PlayerArtifacts.Count -eq 0) {
+			Write-Host "You have no artifacts to sell!" -ForegroundColor Red
+			return
 		    }
 		    
-		    $global:PlayerArtifacts.RemoveAt($artifactIndex)
-		    $global:Player.Gold += 50
-		    Write-Host "Sold $($soldArtifact.Name) for 50 gold!" -ForegroundColor Yellow
+		    Write-Host "`nSelect artifact to sell:" -ForegroundColor Yellow
+		    for ($i = 0; $i -lt $global:PlayerArtifacts.Count; $i++) {
+			$artifact = $global:PlayerArtifacts[$i]
+			$tierColor = if ($artifact.Tier -eq "High") { "Magenta" } else { "Yellow" }
+			Write-Host "$($i + 1). $($artifact.Name) [$($artifact.Tier) Tier] - $($artifact.Description)" -ForegroundColor $tierColor
+		    }
+		    Write-Host "0. Cancel" -ForegroundColor Gray
+		    
+		    do {
+			$sellChoice = Read-Host "`nSelect artifact"
+		    } while ($sellChoice -notin @('0') -and ($sellChoice -notmatch '^\d+$' -or [int]$sellChoice -lt 1 -or [int]$sellChoice -gt $global:PlayerArtifacts.Count))
+		    
+		    if ($sellChoice -eq '0') { return }
+		    
+		    $artifactIndex = [int]$sellChoice - 1
+		    if ($artifactIndex -ge 0 -and $artifactIndex -lt $global:PlayerArtifacts.Count) {
+			$soldArtifact = $global:PlayerArtifacts[$artifactIndex]
+			
+			# Calculate sell value based on tier
+			$sellValue = if ($soldArtifact.Tier -eq "High") { 100 } else { 50 }
+			
+			# Remove artifact bonuses
+			foreach ($stat in $soldArtifact.Stats.Keys) {
+			    switch ($stat) {
+				"Health" { 
+				    $global:Player.MaxHealth -= $soldArtifact.Stats[$stat]
+				    $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
+				}
+				"Mana" { 
+				    $global:Player.MaxMana -= $soldArtifact.Stats[$stat]
+				    $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
+				}
+				"Attack" { $global:Player.Attack -= $soldArtifact.Stats[$stat] }
+				"Defense" { $global:Player.Defense -= $soldArtifact.Stats[$stat] }
+				"Speed" { $global:Player.Speed -= $soldArtifact.Stats[$stat] }
+				"CriticalChance" { $global:Player.CriticalChance -= $soldArtifact.Stats[$stat] }
+				"CriticalMultiplier" { $global:Player.CriticalMultiplier -= $soldArtifact.Stats[$stat] }
+			    }
+			}
+			
+			# Remove artifact from array (FIXED: Use array filtering instead of RemoveAt)
+			$global:PlayerArtifacts = @($global:PlayerArtifacts | Where-Object { $global:PlayerArtifacts.IndexOf($_) -ne $artifactIndex })
+			
+			$global:Player.Gold += $sellValue
+			Write-Host "Sold $($soldArtifact.Name) for $sellValue gold!" -ForegroundColor Yellow
+			Write-Host "Artifact bonuses have been removed." -ForegroundColor Gray
+		    }
 		}
-	    }
+	
         }
     } else {
         Write-Host "Not enough gold!" -ForegroundColor Red
@@ -1423,12 +1450,35 @@ function Start-Game {
 	    '6' {
 	    	Show-Artifacts
 	    }
-            '7' {
-                $global:CurrentFloor++
-                Write-Host "You descend to floor $global:CurrentFloor..." -ForegroundColor Cyan
-                Write-Host "Monsters grow stronger!" -ForegroundColor Yellow
-            }
-            '0' {
+	    '7' {
+		$global:CurrentFloor++
+		Write-Host "You descend to floor $global:CurrentFloor..." -ForegroundColor Cyan
+		    
+		$isBossFloor = $global:CurrentFloor % 3 -eq 0
+		    
+		if ($isBossFloor) {
+			$bossMessages = @(
+			    "A terrifying roar echoes through the chamber... A boss awaits!",
+			    "The very air crackles with power... A formidable foe is near!",
+			    "You sense a massive presence watching you... Prepare for battle!",
+			    "Ancient runes glow ominously... This floor holds a great challenge!"
+			)
+			$randomMessage = $bossMessages | Get-Random
+			Write-Typewriter $randomMessage -Color Red -Delay 40
+			Write-Host "Boss encounter likely!" -ForegroundColor Yellow
+		    } else {
+			$normalMessages = @(
+			    "Monsters grow stronger as you descend deeper.",
+			    "The dungeon's challenges intensify.",
+			    "You venture further into the unknown.",
+			    "Deeper you go, where greater dangers await.",
+			    "Each floor brings new threats and treasures."
+			)
+			$randomMessage = $normalMessages | Get-Random
+			Write-Typewriter $randomMessage -Color Cyan -Delay 30
+		    }
+		}
+		'0' {
 		$continuePlaying = Show-ExitScreen
 		if (!$continuePlaying) {
 			$global:GameRunning = $false
