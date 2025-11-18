@@ -1639,8 +1639,8 @@ function Visit-Shop {
         @{ Name = "Mana Potion"; Cost = 12; Description = "Restore 20 Mana" },
         @{ Name = "Attack Boost"; Cost = 50; Description = "Permanently +2 Attack" },
         @{ Name = "Defense Boost"; Cost = 50; Description = "Permanently +2 Defense" },
-        @{ Name = "Critical Charm"; Cost = 75; Description = "Permanently +5% Critical Chance" },
-        @{ Name = "Keen Edge"; Cost = 100; Description = "Permanently +0.5 Critical Multiplier" }
+        @{ Name = "Critical Charm"; Cost = 100; Description = "Permanently +5% Critical Chance" },
+        @{ Name = "Keen Edge"; Cost = 200; Description = "Permanently +0.5 Critical Multiplier" }
     )
     
     # Display regular items
@@ -1683,7 +1683,8 @@ function Visit-Shop {
         '3' {
             if ($global:Player.Gold -ge 50) {
                 $global:Player.Gold -= 50
-                $global:Player.Attack += 2
+                $global:PlayerBaseStats.Attack += 2
+		Update-AllStats
                 Write-Host "Attack permanently increased by 2!" -ForegroundColor Red
             } else {
                 Write-Host "Not enough gold!" -ForegroundColor Red
@@ -1692,25 +1693,28 @@ function Visit-Shop {
         '4' {
             if ($global:Player.Gold -ge 50) {
                 $global:Player.Gold -= 50
-                $global:Player.Defense += 2
+                $global:PlayerBaseStats.Defense += 2
+		Update-AllStats
                 Write-Host "Defense permanently increased by 2!" -ForegroundColor Green
             } else {
                 Write-Host "Not enough gold!" -ForegroundColor Red
             }
         }
         '5' {
-            if ($global:Player.Gold -ge 75) {
-                $global:Player.Gold -= 75
-                $global:Player.CriticalChance += 5
+            if ($global:Player.Gold -ge 100) {
+                $global:Player.Gold -= 100
+                $global:PlayerBaseStats.CriticalChance += 5
+		Update-AllStats
                 Write-Host "Critical chance increased by 5%! Current: $($global:Player.CriticalChance)%" -ForegroundColor Cyan
             } else {
                 Write-Host "Not enough gold!" -ForegroundColor Red
             }
         }
         '6' {
-            if ($global:Player.Gold -ge 100) {
-                $global:Player.Gold -= 100
-                $global:Player.CriticalMultiplier += 0.5
+            if ($global:Player.Gold -ge 200) {
+                $global:Player.Gold -= 200
+                $global:PlayerBaseStats.CriticalMultiplier += 0.5
+		Update-AllStats
                 Write-Host "Critical multiplier increased by 0.5! Current: $($global:Player.CriticalMultiplier)x" -ForegroundColor Cyan
             } else {
                 Write-Host "Not enough gold!" -ForegroundColor Red
@@ -1720,7 +1724,7 @@ function Visit-Shop {
             Show-EquipmentShop
         }
         '8' {
-            # Existing artifact selling code...
+
             if ($global:PlayerArtifacts.Count -eq 0) {
                 Write-Host "You have no artifacts to sell!" -ForegroundColor Red
                 return
@@ -1744,33 +1748,65 @@ function Visit-Shop {
             if ($artifactIndex -ge 0 -and $artifactIndex -lt $global:PlayerArtifacts.Count) {
                 $soldArtifact = $global:PlayerArtifacts[$artifactIndex]
                 
-                # Remove artifact bonuses
-                foreach ($stat in $soldArtifact.Stats.Keys) {
-                    switch ($stat) {
-                        "Health" { 
-                            $global:Player.MaxHealth -= $soldArtifact.Stats[$stat]
-                            $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
-                        }
-                        "Mana" { 
-                            $global:Player.MaxMana -= $soldArtifact.Stats[$stat]
-                            $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
-                        }
-                        "Attack" { $global:Player.Attack -= $soldArtifact.Stats[$stat] }
-                        "Defense" { $global:Player.Defense -= $soldArtifact.Stats[$stat] }
-                        "Speed" { $global:Player.Speed -= $soldArtifact.Stats[$stat] }
-                        "CriticalChance" { $global:Player.CriticalChance -= $soldArtifact.Stats[$stat] }
-                        "CriticalMultiplier" { $global:Player.CriticalMultiplier -= $soldArtifact.Stats[$stat] }
+		# Remove artifact from array
+		$global:PlayerArtifacts = @($global:PlayerArtifacts | Where-Object { $global:PlayerArtifacts.IndexOf($_) -ne $artifactIndex })
+
+		$global:Player.Gold += 50
+		Write-Host "Sold $($soldArtifact.Name) for 50 gold!" -ForegroundColor Yellow
+
+		# Recalculate all stats from scratch (base + equipment + remaining artifacts)
+		Update-AllStats
+	    }
+        }
+    }
+}
+
+function Update-AllStats {
+    # Store current health/mana percentages to maintain them
+    $healthPercent = if ($global:Player.MaxHealth -gt 0) { $global:Player.Health / $global:Player.MaxHealth } else { 1 }
+    $manaPercent = if ($global:Player.MaxMana -gt 0) { $global:Player.Mana / $global:Player.MaxMana } else { 1 }
+    
+    # Reset to base stats first
+    Remove-EquipmentStats
+    
+    # Reapply equipment stats
+    Apply-EquipmentStats
+    
+    # Reapply all artifact stats
+    foreach ($artifact in $global:PlayerArtifacts) {
+        foreach ($stat in $artifact.Stats.Keys) {
+            $value = $artifact.Stats[$stat]
+            switch ($stat) {
+                "Health" { 
+                    $global:Player.MaxHealth += $value
+                    # Only add to current health if it would exceed max
+                    if ($global:Player.Health -eq ($global:Player.MaxHealth - $value)) {
+                        $global:Player.Health += $value
                     }
                 }
-                
-                # Remove artifact from array
-                $global:PlayerArtifacts = @($global:PlayerArtifacts | Where-Object { $global:PlayerArtifacts.IndexOf($_) -ne $artifactIndex })
-                
-                $global:Player.Gold += 50
-                Write-Host "Sold $($soldArtifact.Name) for 50 gold!" -ForegroundColor Yellow
+                "Mana" { 
+                    $global:Player.MaxMana += $value
+                    # Only add to current mana if it would exceed max
+                    if ($global:Player.Mana -eq ($global:Player.MaxMana - $value)) {
+                        $global:Player.Mana += $value
+                    }
+                }
+                "Attack" { $global:Player.Attack += $value }
+                "Defense" { $global:Player.Defense += $value }
+                "Speed" { $global:Player.Speed += $value }
+                "CriticalChance" { $global:Player.CriticalChance += $value }
+                "CriticalMultiplier" { $global:Player.CriticalMultiplier += $value }
             }
         }
     }
+    
+    # Restore health/mana percentages
+    $global:Player.Health = [Math]::Round($global:Player.MaxHealth * $healthPercent)
+    $global:Player.Mana = [Math]::Round($global:Player.MaxMana * $manaPercent)
+    
+    # Ensure minimum values
+    $global:Player.Health = [Math]::Max(1, $global:Player.Health)
+    $global:Player.Mana = [Math]::Max(0, $global:Player.Mana)
 }
 
 function Show-EquipmentShop {
